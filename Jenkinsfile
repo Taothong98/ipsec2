@@ -16,7 +16,7 @@ pipeline {
                 // รันคำสั่ง docker-compose บน Server (ผ่าน docker.sock)
                 // --build: สร้าง image ใหม่ถ้าโค้ดเปลี่ยน
                 // -d: รันใน background
-                sh 'docker-compose up -d --build'
+                sh 'sudo docker-compose up -d --build'
             }
         }
 
@@ -24,7 +24,7 @@ pipeline {
             steps {
                 // (ไม่บังคับ) แสดงผลว่ารันสำเร็จ
                 echo 'Service ที่กำลังรันอยู่:'
-                sh 'docker-compose ps'
+                sh 'sudo docker-compose ps'
             }
         }
     }
