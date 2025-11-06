@@ -1,0 +1,105 @@
+############################## SERVER ##########################
+services:
+  ipsec-server:
+    # image: taothong/ovpn-server:2.0
+    build:
+      context: .
+      dockerfile: /dockerfile.server
+    container_name: ipsec-server
+    # restart: unless-stopped    
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    privileged: true      
+    devices:
+      - /dev/net/tun       
+    ports:
+      - "500:500/udp"    # IKE
+      - "4500:4500/udp"  # NAT-T
+      - "8080:80"        # Apache Test Port
+    volumes:
+      - ./ipsec_server.conf:/etc/ipsec.conf
+      - ./ipsec.secrets:/etc/ipsec.secrets
+
+
+      
+
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv4.ip_forward=1   
+    # network_mode: host    
+    networks:
+      net:
+          ipv4_address: 172.30.30.100
+      net-lan-a:
+          ipv4_address: 172.20.0.10           
+
+
+# ---------------------------------------------------------------------------------------------------------------- 
+      
+# docker logs ipsec-server
+# docker logs ipsec-client
+# cat -vet /etc/ipsec.conf
+# ipsec start
+# ipsec status ikev2-to-server
+# ipsec statusall
+# tail -f /var/log/syslog
+# tail -f /var/log/charon.log
+
+# find / -name charon
+# ipsec stop
+# exec /usr/lib/ipsec/charon
+
+# docker exec -it ipsec-client /bin/bash
+# ----------------------------------------------------------------------------------------------------------------
+  ipsec-client:
+    # image: taothong/ovpn-client:3.0
+    build:
+      context: .
+      dockerfile: /dockerfile.client
+    container_name: ipsec-client
+    # restart: unless-stopped    
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    privileged: true      
+    devices:
+      - /dev/net/tun       
+    volumes:
+      - ./ipsec_client.conf:/etc/ipsec.conf
+      - ./ipsec.secrets:/etc/ipsec.secrets
+
+    # network_mode: host 
+    networks:
+      net:
+          ipv4_address: 172.30.30.99  
+      net-lan-b:
+          ipv4_address: 172.25.0.10  
+
+networks:
+  net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.30.0/24       
+
+  net-lan-a:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24    
+
+  net-lan-b:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/24  
+
+# docker build -t openvpn-server .
+# docker build -t openvpn-client .
+
+# docker tag openvpn-vpnserver-openvpn-as:latest taothong/ovpn-server:4.0
+# docker tag openvpn-vpnserver-openvpn-as-client:latest taothong/ovpn-client:3.0
+
+# docker push taothong/ovpn-server:4.0
+# docker push taothong/ovpn-client:2.0

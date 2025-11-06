@@ -1,0 +1,29 @@
+# ใช้ Ubuntu 22.04 เป็น Base
+FROM ubuntu:22.04
+
+# ตั้งค่า Environment สำหรับการติดตั้งแบบ non-interactive
+ENV DEBIAN_FRONTEND=noninteractive
+
+# --- ขั้นตอนที่ 1: คัดลอกสคริปต์ติดตั้ง ---
+# ใช้สคริปต์เดียวกันกับ Server
+COPY install_ipsec_strongswan_apache.sh /install_ipsec_strongswan_apache.sh
+
+# ทำให้สคริปต์ติดตั้งทำงานได้
+RUN chmod +x /install_ipsec_strongswan_apache.sh
+
+# --- ขั้นตอนที่ 2: รันสคริปต์ติดตั้ง (ตอน Build) ---
+RUN /install_ipsec_strongswan_apache.sh
+
+# --- ขั้นตอนที่ 3: คัดลอก Entrypoint และคอนฟิก IPsec ของ Client ---
+# ✅ คัดลอกไฟล์สำหรับ Client
+COPY entrypoint_client.sh /entrypoint.sh
+COPY ipsec_client.conf /etc/ipsec.conf
+COPY ipsec.secrets /etc/ipsec.secrets
+RUN chmod +x /entrypoint.sh
+
+# --- ขั้นตอนที่ 4: รัน Container (Run-time) ---
+CMD ["/entrypoint.sh"]
+
+# --- เปิด Port ที่จำเป็น (ถ้า Client ต้องการให้เข้าถึง Apache) ---
+EXPOSE 80/tcp
+# ไม่จำเป็นต้อง EXPOSE 500/4500 เพราะ Client เป็นผู้เริ่มเชื่อมต่อ

@@ -1,0 +1,26 @@
+# ใช้ Ubuntu 22.04 เป็น Base
+FROM ubuntu:22.04
+
+# ตั้งค่า Environment สำหรับการติดตั้งแบบ non-interactive
+ENV DEBIAN_FRONTEND=noninteractive
+
+# --- คัดลอกสคริปต์ติดตั้ง (ใช้ร่วมกัน) ---
+COPY install_ipsec_strongswan_apache.sh /install_ipsec_strongswan_apache.sh
+RUN chmod +x /install_ipsec_strongswan_apache.sh
+
+# --- รันสคริปต์ติดตั้ง (ตอน Build) ---
+RUN /install_ipsec_strongswan_apache.sh
+
+# --- คัดลอก Entrypoint และคอนฟิกของ Server ---
+COPY entrypoint_server.sh /entrypoint.sh
+COPY ipsec_server.conf /etc/ipsec.conf
+COPY ipsec.secrets /etc/ipsec.secrets 
+RUN chmod +x /entrypoint.sh
+
+# --- รัน Container (Run-time) ---
+CMD ["/entrypoint.sh"]
+
+# --- เปิด Port ที่จำเป็นสำหรับ Server ---
+EXPOSE 500/udp    
+EXPOSE 4500/udp  
+EXPOSE 80/tcp    
